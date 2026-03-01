@@ -1,0 +1,22 @@
+# LaTeX auxiliary files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.xdv
+_site/
+
+# Old CV versions (keep source only)
+Chamberlin_CV_*.docx
+Chamberlin_CV_*.pdf
+Chamberlin_bio_*.docx
+Chamberlin_Alliance_*.pptx

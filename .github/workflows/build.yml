@@ -1,0 +1,97 @@
+name: Build and publish CV
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'main.tex'
+      - 'own-bib.bib'
+  workflow_dispatch:   # allows manual trigger from GitHub UI
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile LaTeX (pdflatex + biber)
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          latexmk_use_lualatex: false
+          latexmk_shell_escape: false
+          extra_system_packages: "biber"
+          args: >-
+            -pdf
+            -interaction=nonstopmode
+            -halt-on-error
+            -file-line-error
+
+      - name: Rename output PDF
+        run: mv main.pdf J_Chamberlin_CV.pdf
+
+      - name: Prepare GitHub Pages content
+        run: |
+          mkdir -p _site
+          cp J_Chamberlin_CV.pdf _site/
+          cat > _site/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <title>Jordan Chamberlin – CV</title>
+            <style>
+              body { margin: 0; font-family: sans-serif; background: #f5f5f5; }
+              header {
+                background: #0E2841; color: white;
+                padding: 1.2rem 2rem;
+                display: flex; align-items: center; justify-content: space-between;
+              }
+              header h1 { margin: 0; font-size: 1.4rem; font-weight: 600; }
+              header a {
+                color: #4EA72E; text-decoration: none;
+                border: 1px solid #4EA72E; padding: 0.4rem 0.9rem;
+                border-radius: 4px; font-size: 0.9rem;
+              }
+              header a:hover { background: #4EA72E; color: white; }
+              iframe {
+                display: block;
+                width: 100%; height: calc(100vh - 64px);
+                border: none;
+              }
+            </style>
+          </head>
+          <body>
+            <header>
+              <h1>Jordan Chamberlin – Curriculum Vitae</h1>
+              <a href="J_Chamberlin_CV.pdf" download>Download PDF</a>
+            </header>
+            <iframe src="J_Chamberlin_CV.pdf" title="Jordan Chamberlin CV"></iframe>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
